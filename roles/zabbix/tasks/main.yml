@@ -1,0 +1,83 @@
+---
+# tasks file for zabbix
+  - name: Download zabbix-release_5.0-1+bionic_all.deb
+    get_url:   
+      url: https://repo.zabbix.com/zabbix/5.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_5.0-1+bionic_all.deb
+      dest: /tmp/zabbix-release_5.0-1+bionic_all.deb
+
+  - name: Install a .deb package
+    apt:
+      deb: /tmp/zabbix-release_5.0-1+bionic_all.deb
+      update_cache: no
+
+
+
+
+  - name: Upgrade the OS (apt-get dist-upgrade)
+    apt:
+      update_cache: yes
+      upgrade: dist
+
+  - name: Install a list of packages
+    apt:
+#      update_cache: yes
+      pkg:
+      - zabbix-server-pgsql
+      - zabbix-frontend-php
+      - php7.2-pgsql
+      - zabbix-nginx-conf
+      - zabbix-agent
+      - postgresql
+      - postgresql-contrib
+
+  - name: install prerequisites
+    sudo: true
+    apt: name={{ item }} state=latest
+    with_items:
+    - libpq-dev
+    - python-psycopg2
+
+
+  - name: Create DB
+    become: yes
+    become_user: postgres
+    postgresql_db:
+      name: zabbix
+
+
+
+  - name: Create User_DB
+    become: yes
+    become_user: postgres
+    postgresql_user:
+      db: zabbix
+      name: zabbix
+      password: 1q2w3e
+      encrypted: yes    
+
+
+
+  - name: Import DB
+    shell: zcat /usr/share/doc/zabbix-server-pgsql*/create.sql.gz | sudo -u zabbix psql zabbix 
+    
+
+#  - name:   sudo -u zabbix psql zabbix
+    
+
+  - name: Add Zabbix_server config
+    template: src=zabbix_server.conf dest=/etc/zabbix/zabbix_server.conf
+
+  - name: Add NGINX config
+    template: src=nginx.conf dest=/etc/zabbix/nginx.conf owner=root group=root
+    notify:
+      - nginx restart
+      - zabbix-server restart
+      - zabbix-agent restart
+
+  - name: timezone
+    lineinfile: dest=/etc/zabbix/php-fpm.conf
+                regexp='^;'
+                insertbefore=BOF
+                line='php_value[date.timezone] = Europe/Moscow'
+    notify:
+      - php7.2-fpm restart

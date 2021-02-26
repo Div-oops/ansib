@@ -1,0 +1,6 @@
+---
+- hosts: w2
+  sudo: yes
+  roles:
+    - zabbix-agent_nginx
+

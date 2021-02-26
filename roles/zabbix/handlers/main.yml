@@ -1,0 +1,16 @@
+---
+# handlers file for zabbix
+  - name: zabbix-server restart
+    service: name=zabbix-server state=restarted enabled=yes
+
+  - name: zabbix-agent restart
+    service: name=zabbix-agent state=restarted enabled=yes
+
+  - name: nginx start
+    service: name=nginx state=started enabled=yes
+
+  - name: nginx restart
+    service: name=nginx state=restarted enabled=yes
+
+  - name: php7.2-fpm restart
+    service: name=php7.2-fpm state=restarted enabled=yes

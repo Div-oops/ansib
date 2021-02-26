@@ -1,0 +1,5 @@
+---
+- hosts: z2
+  sudo: yes
+  roles:
+    - zabbix
